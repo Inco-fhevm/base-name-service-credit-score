@@ -107,24 +107,13 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "publicKey",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "bytes",
-        "name": "signature",
-        "type": "bytes"
-      }
-    ],
+    "inputs": [],
     "name": "viewOwnScore",
     "outputs": [
       {
-        "internalType": "bytes",
+        "internalType": "uint16",
         "name": "",
-        "type": "bytes"
+        "type": "uint16"
       }
     ],
     "stateMutability": "view",

@@ -1,17 +1,21 @@
-import { BrowserProvider, JsonRpcProvider } from "ethers";
+import { Wallet, BrowserProvider, JsonRpcProvider } from "ethers";
 import { initFhevm, createInstance } from "fhevmjs";
 export const init = async () => {
   await initFhevm();
 };
 
-export const provider = new BrowserProvider(window.ethereum);
+export const incoProvider = new JsonRpcProvider(`https://evm-rpc.inco.network`);
+export const incoSigner = new Wallet(
+  "0x92293977156de6e03b20b26708cb4496b523116190b5c32d77cee8286d0c41f6",
+  incoProvider
+);
 
 let instance;
 
 export const createFhevmInstance = async () => {
-  const network = await provider.getNetwork();
+  const network = await incoProvider.getNetwork();
   const chainId = +network.chainId.toString();
-  const publicKey = await provider.call({
+  const publicKey = await incoProvider.call({
     from: null,
     to: "0x0000000000000000000000000000000000000044",
   });

@@ -1,148 +1,119 @@
 import "./App.css";
 import { useState, useEffect } from "react";
-import { init, getInstance } from "./utils/fhevm";
-import { BrowserRouter as Router, Route, Link, Routes } from "react-router-dom";
-import { Connect } from "./Connect";
-import ConfidentialERC20 from "./components/erc20/ConfidentialERC20";
-import ConfidentialDID from "./components/ConfidentialDID/ConfidentialDID";
-import PrivateVoting from "./components/PrivateVoting/PrivateVoting";
-import SmartWalletOTP from "./components/SmartWalletOTP/SmartWalletOTP";
-import HiddenCard from "./components/HiddenCard/HiddenCard";
+import {
+  incoSigner,
+  getInstance,
+  incoProvider,
+  getTokenSignature,
+} from "./utils/fhevm";
+import { toHexString } from "./utils/utils";
+import { Contract } from "ethers";
+import confidentialDIDABI from "./abi/confidentialDID/confidentialDIDABI";
+
+let instance;
+const CONTRACT_ADDRESS = "0x353F8F34Dc6927c55c7419C2329B4AAeA77D27B3";
 
 function App() {
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [responseMessage, setResponseMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isAbove700, setIsAbove700] = useState("Click Below");
+  const [loading, setLoading] = useState("");
+  const [dialog, setDialog] = useState("");
+  const [encryptedData, setEncryptedData] = useState("");
+  const [userCreditScore, setUserCreditScore] = useState("hidden");
 
   useEffect(() => {
-    init()
-      .then(() => {
-        setIsInitialized(true);
-      })
-      .catch(() => setIsInitialized(false));
+    async function fetchInstance() {
+      instance = await getInstance();
+    }
+    fetchInstance();
   }, []);
 
-  if (!isInitialized) return null;
+  const reencrypt = async () => {
+    try {
+      // const signer = await provider.getSigner();
+      const contract = new Contract(
+        CONTRACT_ADDRESS,
+        confidentialDIDABI,
+        incoSigner
+      );
+      setLoading('Encrypting "30" and generating ZK proof...');
+      setLoading("Sending transaction...");
+      console.log("signer", typeof incoSigner.address);
+      const result = await contract.viewOwnScore();
+      setLoading("Waiting for transaction validation...");
+      setLoading("");
+      console.log("result", result);
+      setUserCreditScore(Number(result));
+    } catch (e) {
+      console.log(e);
+      setLoading("");
+      setDialog("User score not set!");
+    }
+  };
 
-  return (
-    <Router>
-      <div className="App flex flex-col justify-center font-press-start text-black">
-        <div>
-          <Connect>
-            {(account, provider) => (
-              <Routes>
-                <Route exact path="/" element={<Home />} />
-                <Route
-                  exact
-                  path="/confidential-erc20"
-                  element={<ConfidentialERC20 />}
-                />
-                <Route
-                  exact
-                  path="/confidential-DID"
-                  element={<ConfidentialDID />}
-                />
-                <Route
-                  exact
-                  path="/private-voting"
-                  element={<PrivateVoting />}
-                />
-                <Route
-                  exact
-                  path="/smart-wallet-otp"
-                  element={<SmartWalletOTP />}
-                />
-                <Route exact path="/hidden-card" element={<HiddenCard />} />
-              </Routes>
-            )}
-          </Connect>
-        </div>
-      </div>
-    </Router>
-  );
-}
+  const verifyCreditScore = async () => {
+    try {
+      // const signer = await provider.getSigner();
+      const contract = new Contract(
+        CONTRACT_ADDRESS,
+        confidentialDIDABI,
+        incoSigner
+      );
+      setLoading('Encrypting "30" and generating ZK proof...');
+      setLoading("Sending transaction...");
+      console.log("signer", typeof incoSigner.address);
+      const result = await contract.isUserScoreAbove700(incoSigner.address);
+      setLoading("Waiting for transaction validation...");
+      setLoading("");
+      setIsAbove700(result.toString());
+    } catch (e) {
+      console.log(e);
+      setLoading("");
+      setDialog("User score not set!");
+    }
+  };
 
-function Home() {
   return (
     <div className="mt-5">
-      <img src={"/band.svg"} alt="Band" />
-      <h1 className="my-10 text-3xl font-bold text-black">Demo dApps</h1>
-      <img className="mb-5" src={"/band.svg"} alt="Band" />
-      <div className="flex flex-col mb-5">
-        <Link
-          className="text-black hover:text-blue-500 transition duration-300 my-2"
-          to="/confidential-erc20"
-        >
-          Confidential ERC-20
-        </Link>
-        <Link
-          className="text-black hover:text-blue-500 transition duration-300 my-2"
-          to="/hidden-card"
-        >
-          Hidden Random Card
-        </Link>
-        <Link
-          className="text-black hover:text-blue-500 transition duration-300 my-2"
-          to="/private-voting"
-        >
-          Private Voting
-        </Link>
-        <Link
-          className="text-black hover:text-blue-500 transition duration-300 my-2"
-          to="/smart-wallet-otp"
-        >
-          Smart Wallet OTP
-        </Link>
-        <Link
-          className="text-black hover:text-blue-500 transition duration-300 my-2"
-          to="/confidential-did"
-        >
+      <div className="flex flex-col text-center justify-center items-center mb-10 mt-10">
+        <img src={"/band.svg"} alt="Band" />
+        <h1 className="my-10 text-2xl font-bold text-black">
           Confidential DID
-        </Link>
+        </h1>
+        <img src={"/band.svg"} alt="Band" />
       </div>
-      <br></br>
-      <h1 className="text-3xl font-bold underline mb-5">Tools:</h1>
-      <div className="flex flex-col">
-        <Link
-          className="text-black hover:text-blue-500 transition duration-300 my-2"
-          to="https://docs.inco.network/getting-started/connect-metamask"
-          target="_blank"
-        >
-          Add Inco Network to Wallet
-        </Link>
-        <Link
-          className="text-black hover:text-blue-500 transition duration-300 my-2"
-          to="https://faucetdev.inco.network/"
-          target="_blank"
-        >
-          Faucet
-        </Link>
-        <Link
-          className="text-black hover:text-blue-500 transition duration-300 my-2"
-          to="https://utils.inco.network/"
-          target="_blank"
-        >
-          Ciphertext Generator
-        </Link>
-        <Link
-          className="text-black hover:text-blue-500 transition duration-300 my-2"
-          to="https://explorer.inco.network/"
-          target="_blank"
-        >
-          Block Explorer
-        </Link>
-        <Link
-          className="text-black hover:text-blue-500 transition duration-300 my-2"
-          to="https://docs.inco.network/getting-started/example-dapps"
-          target="_blank"
-        >
-          Sample Codes
-        </Link>
-        <Link
-          className="text-black hover:text-blue-500 transition duration-300 my-2"
-          to="https://docs.inco.network/"
-          target="_blank"
-        >
-          Documentation
-        </Link>
+      <div className="flex flex-row">
+        <div className="flex flex-col w-1/2 p-4">
+          <div className="bg-black py-10 px-10 text-left mb-6">
+            <div className="text-white">
+              Your Credit Score:{" "}
+              <span className="text-custom-green">{userCreditScore}</span>
+            </div>
+            <button
+              className="bg-gray-200 hover:bg-blue-400 text-black font-bold py-2 px-4 rounded mb-8"
+              onClick={reencrypt}
+            >
+              Decrypt Own Credit Score
+            </button>
+            <div className="text-white">
+              Is your score above 700?:{" "}
+              <span className="text-custom-green">{isAbove700}</span>
+            </div>
+            <button
+              className="bg-gray-200 hover:bg-blue-400 text-black font-bold py-2 px-4 rounded mb-8"
+              onClick={verifyCreditScore}
+            >
+              Verify without decrypting
+            </button>
+          </div>
+          {responseMessage && (
+            <p className="mb-4 text-blue-500">{responseMessage}</p>
+          )}
+          {errorMessage && <p className="mb-4 text-red-500">{errorMessage}</p>}
+          {dialog && <div>{dialog}</div>}
+          {loading && <div>{loading}</div>}
+        </div>
       </div>
     </div>
   );
