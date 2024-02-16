@@ -10,6 +10,9 @@ import {
 import { Contract } from "ethers";
 import confidentialDIDABI from "./abi/confidentialDID/confidentialDIDABI.json";
 
+// Polyfill for Buffer, which is used in fhevmjs.
+window.Buffer = Buffer;
+
 let instance;
 export const CONTRACT_ADDRESS = "0x843bB5438CB0f9212B5B60b0174d4b7396F5bE9d";
 
@@ -42,7 +45,6 @@ function App() {
       setLoading("Waiting for transaction validation...");
       setLoading("");
       console.log("result", encryptedResult);
-      window.Buffer = Buffer;
       const result = await instance.decrypt(CONTRACT_ADDRESS, encryptedResult);
       setUserCreditScore(Number(result));
     } catch (e) {

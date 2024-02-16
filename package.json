@@ -12,6 +12,7 @@
   "dependencies": {
     "@metamask/eth-sig-util": "^7.0.0",
     "bootstrap": "4.6",
+    "buffer": "^6.0.3",
     "ether": "^0.0.9",
     "ethers": "^6.7.1",
     "fhevmjs": "^0.4.0-3",
