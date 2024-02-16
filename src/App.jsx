@@ -1,25 +1,22 @@
 import "./App.css";
 import { useState, useEffect } from "react";
+import { Buffer } from 'buffer';
+
 import {
   incoSigner,
   getInstance,
-  incoProvider,
-  getTokenSignature,
+  getPublicKey,
 } from "./utils/fhevm";
-import { toHexString } from "./utils/utils";
 import { Contract } from "ethers";
-import confidentialDIDABI from "./abi/confidentialDID/confidentialDIDABI";
+import confidentialDIDABI from "./abi/confidentialDID/confidentialDIDABI.json";
 
 let instance;
-const CONTRACT_ADDRESS = "0x8a88B1a5814D830386029f79CC51159A3Cb2c1DE";
+export const CONTRACT_ADDRESS = "0x843bB5438CB0f9212B5B60b0174d4b7396F5bE9d";
 
 function App() {
-  const [responseMessage, setResponseMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
   const [isAbove700, setIsAbove700] = useState("Click Below");
   const [loading, setLoading] = useState("");
   const [dialog, setDialog] = useState("");
-  const [encryptedData, setEncryptedData] = useState("");
   const [userCreditScore, setUserCreditScore] = useState("hidden");
 
   useEffect(() => {
@@ -30,20 +27,23 @@ function App() {
   }, []);
 
   const reencrypt = async () => {
+    setLoading('');
+    setDialog('');
     try {
-      // const signer = await provider.getSigner();
       const contract = new Contract(
         CONTRACT_ADDRESS,
         confidentialDIDABI,
         incoSigner
       );
-      setLoading('Encrypting "30" and generating ZK proof...');
       setLoading("Sending transaction...");
-      console.log("signer", typeof incoSigner.address);
-      const result = await contract.viewOwnScore();
+      console.log("signer", incoSigner.address);
+      const reencryption = await getPublicKey(instance);
+      const encryptedResult = await contract.viewOwnScore(reencryption.publicKey, reencryption.signature);
       setLoading("Waiting for transaction validation...");
       setLoading("");
-      console.log("result", result);
+      console.log("result", encryptedResult);
+      window.Buffer = Buffer;
+      const result = await instance.decrypt(CONTRACT_ADDRESS, encryptedResult);
       setUserCreditScore(Number(result));
     } catch (e) {
       console.log(e);
@@ -53,6 +53,8 @@ function App() {
   };
 
   const verifyCreditScore = async () => {
+    setLoading('');
+    setDialog('');
     try {
       // const signer = await provider.getSigner();
       const contract = new Contract(
@@ -61,7 +63,7 @@ function App() {
         incoSigner
       );
       setLoading('Encrypting "30" and generating ZK proof...');
-      setLoading("Sending transaction...");
+      setLoading("Querying contract...");
       console.log("signer", typeof incoSigner.address);
       const result = await contract.isUserScoreAbove700(incoSigner.address);
       setLoading("Waiting for transaction validation...");
@@ -84,9 +86,10 @@ function App() {
         <img src={"/band.svg"} alt="Band" />
       </div>
       <div className="flex flex-row">
-        <div className="flex flex-col w-1/2 p-4">
-          <div className="bg-black py-10 px-10 text-left mb-6">
-            <div className="text-white">
+        <div className="flex flex-col p-4">
+          <div className="bg-black py-10 px-10 text-left mb-6 text-center">
+            <h2>Your address: {incoSigner.address} (hardcoded for this Dapp)</h2>
+            <div className="mt-10 text-white">
               Your Credit Score:{" "}
               <span className="text-custom-green">{userCreditScore}</span>
             </div>
@@ -106,13 +109,9 @@ function App() {
             >
               Verify without decrypting
             </button>
+            {loading && <div>{loading}</div>}
+            {dialog && <div>{dialog}</div>}
           </div>
-          {responseMessage && (
-            <p className="mb-4 text-blue-500">{responseMessage}</p>
-          )}
-          {errorMessage && <p className="mb-4 text-red-500">{errorMessage}</p>}
-          {dialog && <div>{dialog}</div>}
-          {loading && <div>{loading}</div>}
         </div>
       </div>
     </div>
