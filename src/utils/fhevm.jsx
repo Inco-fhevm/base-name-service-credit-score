@@ -1,8 +1,6 @@
 import { Wallet, JsonRpcProvider, AbiCoder, BrowserProvider } from "ethers";
 import { initFhevm, createInstance } from "fhevmjs";
 
-import { CONTRACT_ADDRESS } from "../App";
-
 export const init = async () => {
   await initFhevm();
 };
@@ -41,19 +39,21 @@ export const getInstance = async () => {
   return instance;
 };
 
-export const getPublicKey = async (instance) => {
+export const getPublicKey = async (instance, contractAddress) => {
   const eip712Domain = {
-    // This defines the network, in this case, Mainnet.
+    // This defines the network, in this case, Gentry Testnet.
     chainId: 9090,
     // Give a user-friendly name to the specific contract you're signing for.
+    // MUST match the string in contract constructor (EIP712Modifier).
     name: 'Authorization token',
     // // Add a verifying contract to make sure you're establishing contracts with the proper entity.
-    verifyingContract: CONTRACT_ADDRESS,
+    verifyingContract: contractAddress,
     // This identifies the latest version.
+    // MUST match the version in contract constructor (EIP712Modifier).
     version: '1',
   }
 
-  if (!instance.hasKeypair(CONTRACT_ADDRESS)) {
+  if (!instance.hasKeypair(contractAddress)) {
     const reencryption = instance.generatePublicKey(eip712Domain);
    
     // If using a BrowserProvider like MetaMask, you can use the following code to sign the message:
@@ -71,8 +71,8 @@ export const getPublicKey = async (instance) => {
       reencryption.eip712.message
     )
     
-    instance.setSignature(CONTRACT_ADDRESS, sig);
+    instance.setSignature(contractAddress, sig);
   }
 
-  return instance.getPublicKey(CONTRACT_ADDRESS);
+  return instance.getPublicKey(contractAddress);
 };

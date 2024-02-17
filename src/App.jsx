@@ -14,7 +14,7 @@ import confidentialDIDABI from "./abi/confidentialDID/confidentialDIDABI.json";
 window.Buffer = Buffer;
 
 let instance;
-export const CONTRACT_ADDRESS = "0x843bB5438CB0f9212B5B60b0174d4b7396F5bE9d";
+const CONTRACT_ADDRESS = "0x843bB5438CB0f9212B5B60b0174d4b7396F5bE9d";
 
 function App() {
   const [isAbove700, setIsAbove700] = useState("Click Below");
@@ -40,7 +40,7 @@ function App() {
       );
       setLoading("Sending transaction...");
       console.log("signer", incoSigner.address);
-      const reencryption = await getPublicKey(instance);
+      const reencryption = await getPublicKey(instance, CONTRACT_ADDRESS)
       const encryptedResult = await contract.viewOwnScore(reencryption.publicKey, reencryption.signature);
       setLoading("Waiting for transaction validation...");
       setLoading("");
